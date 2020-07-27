@@ -100,6 +100,20 @@ def byte(val, fmt="{:.2f}", sys="IEC"):
     return "{}{}".format(fmt).format(val * div, final)
 
 
+def kibyte(val, fmt="{:.2f}"):
+    """Returns a Ki-byte representation of the input value
+
+    :param val: value to format, must be convertible into a float
+    :param fmt: optional output format string, defaults to {:.2f}
+
+    :return: Ki-byte representation of the input value
+    :rtype: string
+    """
+
+    val = float(val) / 1024.0
+    return "{}KiB".format(fmt).format(val)
+
+
 __seconds_pattern = re.compile(r"(([\d\.?]+)h)?(([\d\.]+)m)?([\d\.]+)?s?")
 
 

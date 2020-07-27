@@ -167,7 +167,7 @@ class Module(core.module.Module):
                 )
                 prev = self._prev.get(name, 0)
                 bspeed = (int(data[direction]) - int(prev)) / timediff
-                speed = util.format.byte(bspeed, self._format)
+                speed = util.format.kibyte(bspeed, self._format)
                 txtspeed = "{0}/s".format(speed)
                 if self._graphlen > 0:
                     # skip first value returned by psutil, because it is
