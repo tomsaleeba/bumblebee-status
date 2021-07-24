@@ -22,6 +22,7 @@ Parameters:
     * cpu.warning : Warning threshold in % of CPU usage (defaults to 70%)
     * cpu.critical: Critical threshold in % of CPU usage (defaults to 80%)
     * cpu.format  : Format string (defaults to '{:.01f}%')
+    * cpu.percpu  : If set to true, show each individual cpu (defaults to false)
 
 .. image:: ../screenshots/cpu.png
 
@@ -83,6 +84,14 @@ Requires:
     * Python module 'pygit2'
 
 .. image:: ../screenshots/git.png
+
+keys
+~~~~
+
+Shows when a key is pressed
+
+Parameters:
+    * keys.keys: Comma-separated list of keys to monitor (defaults to "")
 
 layout-xkb
 ~~~~~~~~~~
@@ -1051,12 +1060,14 @@ Requires the following executable:
     * playerctl
 
 Parameters:
-    * playerctl.format:   Format string (defaults to '{artist} - {title}')
-      Available values are: {album}, {title}, {artist}, {trackNumber}
+    * playerctl.format:   Format string (defaults to '{{artist}} - {{title}}  {{duration(position)}}/{{duration(mpris:length)}}').
+      The format string is passed to 'playerctl -f' as an argument. Read `the README <https://github.com/altdesktop/playerctl#printing-properties-and-metadata>`_ for more information.
     * playerctl.layout:   Comma-separated list to change order of widgets (defaults to song, previous, pause, next)
       Widget names are: playerctl.song, playerctl.prev, playerctl.pause, playerctl.next
+    * playerctl.args:     The arguments added to playerctl.
+      You can check 'playerctl --help' or `its readme <https://github.com/altdesktop/playerctl#using-the-cli>`_. For example, it could be '-p vlc,%any'.
 
-Parameters are inherited from `spotify` module, many thanks to its developers!
+Parameters are inspired by the `spotify` module, many thanks to its developers!
 
 contributed by `smitajit <https://github.com/smitajit>`_ - many thanks!
 
@@ -1237,7 +1248,7 @@ a delimiter (; semicolon by default).
 For example in order to create two shortcuts labeled A and B with commands
 cmdA and cmdB you could do:
 
- ./bumblebee-status -m shortcut -p shortcut.cmd='ls;ps' shortcut.label='A;B'
+ ./bumblebee-status -m shortcut -p shortcut.cmd='firefox https://www.google.com;google-chrome https://google.com' shortcut.label='Google (Firefox);Google (Chrome)'
 
 Parameters:
     * shortcut.cmds  : List of commands to execute
@@ -1320,9 +1331,6 @@ stock
 
 Display a stock quote from finance.yahoo.com
 
-Requires the following python packages:
-    * requests
-
 Parameters:
     * stock.symbols : Comma-separated list of symbols to fetch
     * stock.change : Should we fetch change in stock value (defaults to True)
@@ -1343,8 +1351,8 @@ Requires the following python packages:
     * python-dateutil
 
 Parameters:
-    * cpu.lat : Latitude of your location
-    * cpu.lon : Longitude of your location
+    * sun.lat : Latitude of your location
+    * sun.lon : Longitude of your location
 
 (if none of those are set, location is determined automatically via location APIs)
 

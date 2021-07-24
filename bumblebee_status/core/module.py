@@ -27,10 +27,16 @@ def import_user(module_short, config, theme):
             return getattr(mod, "Module")(config, theme)
         else:
             log.debug("importing {} from user via importlib.util".format(module_short))
-            spec = importlib.util.spec_from_file_location("modules.{}".format(module_short), usermod)
-            mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(mod)
-            return mod.Module(config, theme)
+            try:
+                spec = importlib.util.spec_from_file_location("modules.{}".format(module_short), usermod)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                return mod.Module(config, theme)
+            except Exception as e:
+                spec = importlib.util.find_spec("modules.{}".format(module_short), usermod)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                return mod.Module(config, theme)
     raise ImportError("not found")
 
 """Loads a module by name
@@ -89,6 +95,8 @@ class Module(core.input.Object):
         self.alias = self.__config.get("__alias__", None)
         self.id = self.alias if self.alias else self.name
         self.next_update = None
+        self.minimized = False
+        self.minimized = self.parameter("start-minimized", False)
 
         self.theme = theme
 
@@ -120,6 +128,8 @@ class Module(core.input.Object):
 
         for prefix in [self.name, self.module_name, self.alias]:
             value = self.__config.get("{}.{}".format(prefix, key), value)
+            if self.minimized:
+                value = self.__config.get("{}.minimized.{}".format(prefix, key), value)
         return value
 
     """Set a parameter for this module
