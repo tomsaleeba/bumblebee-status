@@ -41,6 +41,8 @@ class Module(core.module.Module):
         clockMem = ""
         clockGpu = ""
         fanspeed = ""
+        gpuUsage = ""
+        memPct = ""
         for item in sp.split("\n"):
             try:
                 key, val = item.split(":")
@@ -61,6 +63,11 @@ class Module(core.module.Module):
                     name = val
                 elif key == "Fan Speed":
                     fanspeed = val.split(" ")[0]
+                elif title == "Utilization":
+                    if key == "Gpu":
+                        gpuUsage = val.split(" ")[0]
+                    elif key == "Memory":
+                        memPct = val.split(" ")[0]
 
             except:
                 title = item.strip()
@@ -76,6 +83,8 @@ class Module(core.module.Module):
             clock_gpu=clockGpu,
             clock_mem=clockMem,
             fanspeed=fanspeed,
+            gpu_usage=gpuUsage,
+            mem_usage_pct=memPct,
         )
 
 

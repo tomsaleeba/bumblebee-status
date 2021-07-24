@@ -43,8 +43,7 @@ class Module(core.module.Module):
     def rtt(self, widget):
         if widget.get("rtt-unreachable"):
             return "{}: unreachable".format(widget.get("address"))
-        return "{}: {:.1f}{} ({}%)".format(
-            widget.get("address"),
+        return "{:.1f}{} ({}%)".format(
             widget.get("rtt-avg"),
             widget.get("rtt-unit"),
             widget.get("packet-loss"),
