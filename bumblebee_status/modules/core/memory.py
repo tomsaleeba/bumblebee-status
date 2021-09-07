@@ -12,6 +12,7 @@ Parameters:
     * memory.critical: Critical threshold in % of memory used (defaults to 90%)
     * memory.format: Format string (defaults to '{used}/{total} ({percent:05.02f}%)')
     * memory.usedonly: Only show the amount of RAM in use (defaults to False). Same as memory.format='{used}'
+    * memory.byte_fmt: format string for bytes
 """
 
 import re
@@ -53,11 +54,12 @@ class Module(core.module.Module):
                 - data["Cached"]
                 - data["Slab"]
             )
+        byte_fmt = self.parameter("byte_fmt") # FIXME can we use the default of the fn?
         self._mem = {
-            "total": util.format.byte(data["MemTotal"]),
+            "total": util.format.byte(data["MemTotal"], fmt=byte_fmt),
             "available": util.format.byte(data["MemAvailable"]),
             "free": util.format.byte(data["MemFree"]),
-            "used": util.format.byte(used),
+            "used": util.format.byte(used, fmt=byte_fmt),
             "percent": float(used) / float(data["MemTotal"]) * 100.0,
         }
 
