@@ -44,6 +44,10 @@ class Module(core.module.Module):
         name = "not found"
         clockMem = ""
         clockGpu = ""
+        maxClockMem = ""
+        maxClockGpu = ""
+        clockMemUsage = ""
+        clockGpuUsage = ""
         fanspeed = ""
         gpuUsagePct = ""
         memIoPct = ""
@@ -57,6 +61,11 @@ class Module(core.module.Module):
                         clockGpu = val.split(" ")[0]
                     elif key == "Memory":
                         clockMem = val.split(" ")[0]
+                if title == "Max Clocks":
+                    if key == "Graphics":
+                        maxClockGpu = val.split(" ")[0]
+                    elif key == "Memory":
+                        maxClockMem = val.split(" ")[0]
                 if title == "FB Memory Usage":
                     if key == "Total":
                         totalMem = val.split(" ")[0]
@@ -80,6 +89,12 @@ class Module(core.module.Module):
         if totalMem and usedMem:
             memUsage = int(int(usedMem) / int(totalMem) * 100)
 
+        if clockGpu and maxClockGpu:
+            clockGpuUsage = int(int(clockGpu) / int(maxClockGpu) * 100)
+
+        if clockMem and maxClockMem:
+            clockMemUsage = int(int(clockMem) / int(maxClockMem) * 100)
+
         str_format = self.parameter(
             "format", "{name}: {temp}°C {mem_used}/{mem_total} MiB"
         )
@@ -94,6 +109,8 @@ class Module(core.module.Module):
             gpu_usage_pct=gpuUsagePct,
             mem_io_pct=memIoPct,
             mem_usage_pct=memUsage,
+            clock_gpu_usage=clockGpuUsage,
+            clock_mem_usage=clockMemUsage,
         )
 
 
