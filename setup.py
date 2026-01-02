@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Setup file for bumbleestatus bar to allow pip install of full package"""
 # -*- coding: utf8 - *-
-from setuptools import setup
+from setuptools import setup, find_packages
 import versioneer
 
 with open("requirements/base.txt") as f:
@@ -56,5 +56,7 @@ setup(
         ("share/bumblebee-status/themes", glob.glob("themes/*.json")),
         ("share/bumblebee-status/themes/icons", glob.glob("themes/icons/*.json")),
         ("share/bumblebee-status/utility", glob.glob("bin/*")),
+        ("share/man/man1", glob.glob("man/*.1")),
     ],
+    packages=find_packages(exclude=["tests", "tests.*"])
 )

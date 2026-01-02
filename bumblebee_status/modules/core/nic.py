@@ -13,13 +13,16 @@ Parameters:
     * nic.exclude: Comma-separated list of interface prefixes (supporting regular expressions) to exclude (defaults to 'lo,virbr,docker,vboxnet,veth,br,.*:avahi')
     * nic.include: Comma-separated list of interfaces to include
     * nic.states: Comma-separated list of states to show (prefix with '^' to invert - i.e. ^down -> show all devices that are not in state down)
-    * nic.format: Format string (defaults to '{intf} {state} {ip} {ssid}')
+    * nic.format: Format string (defaults to '{intf} {state} {ip} {ssid} {strength}')
+    * nic.strength_warning: Integer to set the threshold for warning state (defaults to 50)
+    * nic.strength_critical: Integer to set the threshold for critical state (defaults to 30)
 """
 
 import re
 import shutil
 import netifaces
 import subprocess
+import os
 
 import core.module
 import core.decorators
@@ -28,14 +31,16 @@ import util.format
 
 
 class Module(core.module.Module):
-    @core.decorators.every(seconds=10)
+    @core.decorators.every(seconds=5)
     def __init__(self, config, theme):
         widgets = []
         super().__init__(config, theme, widgets)
         self._exclude = util.format.aslist(
             self.parameter("exclude", "lo,virbr,docker,vboxnet,veth,br,.*:avahi")
         )
-        self._include = util.format.aslist(self.parameter("include", ""))
+
+        include_parameter = self.parameter("include", "")
+        self._include = util.format.aslist(include_parameter) if include_parameter else []
 
         self._states = {"include": [], "exclude": []}
         for state in tuple(
@@ -45,7 +50,15 @@ class Module(core.module.Module):
                 self._states["exclude"].append(state[1:])
             else:
                 self._states["include"].append(state)
-        self._format = self.parameter("format", "{intf} {state} {ip} {ssid}")
+        self._format = self.parameter("format", "{intf} {state} {ip} {ssid} {strength}")
+
+        self._strength_threshold_critical = util.format.asint(self.parameter("strength_critical", 30))
+        self._strength_threshold_warning = util.format.asint(self.parameter("strength_warning", 50))
+
+        # Limits for the accepted dBm values of wifi strength
+        self.__strength_dbm_lower_bound = -110
+        self.__strength_dbm_upper_bound = -30
+
         self.iw = shutil.which("iw")
         self._update_widgets(widgets)
 
@@ -64,13 +77,21 @@ class Module(core.module.Module):
         iftype = "wireless" if self._iswlan(intf) else "wired"
         iftype = "tunnel" if self._istunnel(intf) else iftype
 
+        # "strength" is none if interface type is not wlan
+        strength = widget.get("strength")
+        if self._iswlan(intf) and strength:
+            if strength < self._strength_threshold_critical:
+                states.append("critical")
+            elif strength < self._strength_threshold_warning:
+                states.append("warning")
+
         states.append("{}-{}".format(iftype, widget.get("state")))
 
         return states
 
     def _iswlan(self, intf):
         # wifi, wlan, wlp, seems to work for me
-        if intf.startswith("w"):
+        if intf.startswith("w") and not intf.startswith("wg"):
             return True
         return False
 
@@ -87,6 +108,11 @@ class Module(core.module.Module):
             return []
         return retval
 
+    def _included(self, intf):
+        if not self._include:
+            return True
+        return intf in self._include
+
     def _excluded(self, intf):
         for e in self._exclude:
             if re.match(e, intf):
@@ -97,9 +123,8 @@ class Module(core.module.Module):
         self.clear_widgets()
         interfaces = []
         for i in netifaces.interfaces():
-            if not self._excluded(i):
+            if not self._excluded(i) and self._included(i):
                 interfaces.append(i)
-        interfaces.extend([i for i in netifaces.interfaces() if i in self._include])
 
         for intf in interfaces:
             addr = []
@@ -116,6 +141,9 @@ class Module(core.module.Module):
             ):
                 continue
 
+            strength_dbm = self.get_strength_dbm(intf)
+            strength_percent = self.convert_strength_dbm_percent(strength_dbm)
+
             widget = self.widget(intf)
             if not widget:
                 widget = self.add_widget(name=intf)
@@ -126,12 +154,14 @@ class Module(core.module.Module):
                         ip=", ".join(addr),
                         intf=intf,
                         state=state,
+                        strength=str(strength_percent) + "%" if strength_percent else "",
                         ssid=self.get_ssid(intf),
                     ).split()
                 )
             )
             widget.set("intf", intf)
             widget.set("state", state)
+            widget.set("strength", strength_percent)
 
     def get_ssid(self, intf):
         if not self._iswlan(intf) or self._istunnel(intf) or not self.iw:
@@ -144,6 +174,20 @@ class Module(core.module.Module):
                 return match.group(1)
 
         return ""
+
+    def get_strength_dbm(self, intf):
+        if not self._iswlan(intf) or self._istunnel(intf) or not self.iw:
+            return None
+
+        iw_info = util.cli.execute("{} dev {} link".format(self.iw, intf))
+        for line in iw_info.split("\n"):
+            match = re.match(r"^\s+signal:\s(.+) dBm$", line)
+            if match:
+                return int(match.group(1))
+        return None
+
+    def convert_strength_dbm_percent(self, signal):
+        return int(100 * ((signal + 100) / 70.0)) if signal else None
 
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

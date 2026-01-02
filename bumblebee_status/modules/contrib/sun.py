@@ -39,7 +39,11 @@ class Module(core.module.Module):
         self.__sun = None
 
         if not lat or not lon:
-            lat, lon = util.location.coordinates()
+            try:
+                lat, lon = util.location.coordinates()
+            except Exception:
+                pass
+
         if lat and lon:
             self.__sun = Sun(float(lat), float(lon))
 
@@ -55,18 +59,22 @@ class Module(core.module.Module):
         return "n/a"
 
     def __calculate_times(self):
+        if not self.__sun:
+            self.__sunset = self.__sunrise = None
+            return
+
         self.__isup = False
 
         order_matters = True
 
         try:
-            self.__sunrise = self.__sun.get_local_sunrise_time()
+            self.__sunrise = self.__sun.get_sunrise_time(time_zone=tzlocal())
         except SunTimeException:
             self.__sunrise = "no sunrise"
             order_matters = False
 
         try:
-            self.__sunset = self.__sun.get_local_sunset_time()
+            self.__sunset = self.__sun.get_sunset_time(time_zone=tzlocal())
         except SunTimeException:
             self.__sunset = "no sunset"
             order_matters = False
@@ -76,10 +84,10 @@ class Module(core.module.Module):
 
         now = datetime.datetime.now(tz=tzlocal())
         if now > self.__sunset:
-            tomorrow = (now + datetime.timedelta(days=1)).date()
+            tomorrow = (now + datetime.timedelta(days=1))
             try:
-                self.__sunrise = self.__sun.get_local_sunrise_time(tomorrow)
-                self.__sunset = self.__sun.get_local_sunset_time(tomorrow)
+                self.__sunrise = self.__sun.get_sunrise_time(tomorrow, tzlocal())
+                self.__sunset = self.__sun.get_sunset_time(tomorrow, tzlocal())
             except SunTimeException:
                 self.__sunrise = "no sunrise"
                 self.__sunset = "no sunset"
@@ -87,7 +95,7 @@ class Module(core.module.Module):
         elif now > self.__sunrise:
             tomorrow = (now + datetime.timedelta(days=1)).date()
             try:
-                self.__sunrise = self.__sun.get_local_sunrise_time(tomorrow)
+                self.__sunrise = self.__sun.get_sunrise_time(tomorrow, tzlocal())
             except SunTimeException:
                 self.__sunrise = "no sunrise"
                 return

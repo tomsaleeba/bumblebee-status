@@ -160,6 +160,7 @@ Configuration files have the following format:
 
    [core]
    modules = <comma-separated list of modules to load>
+   autohide = <comma-separated list of modules to hide, unless in warning/error state>
    theme = <theme to use by default>
 
    [module-parameters]
